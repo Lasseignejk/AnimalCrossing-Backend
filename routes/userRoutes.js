@@ -11,6 +11,7 @@ const jwt = require("jsonwebtoken");
 const cors = require("cors")
 
 // MIDDLEWARE
+router.use(express.json())
 router.use(
 	bodyParser.urlencoded({
 		extended: true,
@@ -33,12 +34,12 @@ store.sync();
 
 router.post("/login", async (req, res) => {
 	const { email, password } = req.body;
-	console.log(email);
 	const user = await Users.findOne({
 		where: {
 			email: email,
 		},
 	});
+	
 	if (!user) {
 		res.status(400).send("user not found");
 	}
@@ -54,9 +55,9 @@ router.post("/login", async (req, res) => {
     res.cookie("token", token, {
         httpOnly: true,
     });
-    res.send("ok");
+	// console.log(user)
+    res.json({token, user});
 		
-	
 });
 
 router.post("/create", async (req, res) => {
@@ -68,8 +69,17 @@ router.post("/create", async (req, res) => {
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		});
-		res.send(user);
+			const token = jwt.sign(user.dataValues, process.env.SECRET, {
+				expiresIn: "1h",
+			});
+
+			res.cookie("token", token, {
+				httpOnly: true,
+			});
+			console.log(req.user)
+			res.send(req.user);
 	});
+
 });
 
 module.exports = router;
